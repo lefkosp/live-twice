@@ -129,21 +129,27 @@
 
   [data-scroll-container] {
     scroll-behavior: smooth;
-    scroll-snap-type: x mandatory;
-    scroll-padding: 0;
-    overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     transform: translateZ(0);
     backface-visibility: hidden;
     perspective: 1000px;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  [data-scroll-container]::-webkit-scrollbar {
+    width: 0;
+    height: 0;
   }
 
   section {
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
     transform: translateZ(0);
     will-change: transform;
     contain: layout style paint;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
 
   button {

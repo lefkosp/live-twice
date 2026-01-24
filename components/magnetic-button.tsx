@@ -9,6 +9,7 @@ interface MagneticButtonProps {
   variant?: "primary" | "secondary" | "ghost"
   size?: "default" | "lg"
   onClick?: () => void
+  ariaLabel?: string
 }
 
 export function MagneticButton({
@@ -17,10 +18,11 @@ export function MagneticButton({
   variant = "primary",
   size = "default",
   onClick,
+  ariaLabel,
 }: MagneticButtonProps) {
   const ref = useRef<HTMLButtonElement>(null)
   const positionRef = useRef({ x: 0, y: 0 })
-  const rafRef = useRef<number>()
+  const rafRef = useRef<number | null>(null)
 
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!ref.current) return
@@ -31,7 +33,7 @@ export function MagneticButton({
 
     positionRef.current = { x: x * 0.15, y: y * 0.15 }
 
-    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     rafRef.current = requestAnimationFrame(() => {
       if (ref.current) {
         ref.current.style.transform = `translate3d(${positionRef.current.x}px, ${positionRef.current.y}px, 0)`
@@ -41,7 +43,7 @@ export function MagneticButton({
 
   const handleMouseLeave = () => {
     positionRef.current = { x: 0, y: 0 }
-    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     rafRef.current = requestAnimationFrame(() => {
       if (ref.current) {
         ref.current.style.transform = "translate3d(0px, 0px, 0)"
@@ -66,6 +68,7 @@ export function MagneticButton({
     <button
       ref={ref}
       onClick={onClick}
+      aria-label={ariaLabel}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className={`
