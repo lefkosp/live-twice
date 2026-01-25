@@ -1,8 +1,20 @@
 "use client"
 
 import { Shader, ChromaFlow, Swirl } from "shaders/react"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export function ShaderBackground() {
+  const isMobile = useIsMobile()
+  
+  // Reduce quality and intensity on mobile for performance
+  const detail = isMobile ? 0.5 : 0.8
+  const coarse = isMobile ? 30 : 40
+  const medium = isMobile ? 30 : 40
+  const fine = isMobile ? 30 : 40
+  const intensity = isMobile ? 0.7 : 1.0
+  const radius = isMobile ? 1.8 : 2.2
+  const speed = isMobile ? 0.3 : 0.4
+  
   return (
     <div className="fixed inset-0 z-0">
       <Shader className="h-full w-full">
@@ -10,15 +22,15 @@ export function ShaderBackground() {
         <Swirl
           colorA="#1a1a1a"
           colorB="#2a2a2a"
-          speed={0.4}
-          detail={0.8}
+          speed={speed}
+          detail={detail}
           blend={50}
-          coarseX={40}
-          coarseY={40}
-          mediumX={40}
-          mediumY={40}
-          fineX={40}
-          fineY={40}
+          coarseX={coarse}
+          coarseY={coarse}
+          mediumX={medium}
+          mediumY={medium}
+          fineX={fine}
+          fineY={fine}
         />
         
         {/* Layer 2: Cursor-reactive color bloom */}
@@ -28,8 +40,8 @@ export function ShaderBackground() {
           downColor="#424242"
           leftColor="#FF1744"
           rightColor="#C62828"
-          intensity={1.0}
-          radius={2.2}
+          intensity={intensity}
+          radius={radius}
           momentum={25}
           maskType="alpha"
           opacity={1.0}

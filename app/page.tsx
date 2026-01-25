@@ -5,9 +5,11 @@ import { GrainOverlay } from "@/components/grain-overlay"
 import { MagneticButton } from "@/components/magnetic-button"
 import { ShaderBackground } from "@/components/shader-background"
 import { ShaderFallback } from "@/components/shader-fallback"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { useRef, useEffect, useState } from "react"
 
 export default function Home() {
+  const isMobile = useIsMobile()
   const totalSections = 9
   const sectionLabels = [
     "Hero",
@@ -87,6 +89,9 @@ export default function Home() {
   }
 
   useEffect(() => {
+    // Only enable horizontal touch paging on desktop
+    if (isMobile) return
+
     const handleTouchStart = (e: TouchEvent) => {
       touchStartY.current = e.touches[0].clientY
       touchStartX.current = e.touches[0].clientX
@@ -132,9 +137,12 @@ export default function Home() {
         container.removeEventListener("touchend", handleTouchEnd)
       }
     }
-  }, [currentSection])
+  }, [currentSection, isMobile])
 
   useEffect(() => {
+    // Only enable horizontal wheel paging on desktop
+    if (isMobile) return
+
     const handleWheel = (e: WheelEvent) => {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault()
@@ -192,7 +200,7 @@ export default function Home() {
         container.removeEventListener("wheel", handleWheel)
       }
     }
-  }, [currentSection])
+  }, [currentSection, isMobile])
 
   useEffect(() => {
     let scrollTimeout: NodeJS.Timeout | null = null
@@ -208,6 +216,43 @@ export default function Home() {
         }
 
         const container = scrollContainerRef.current
+        
+        // On mobile, track scroll position for vertical scroll
+        if (isMobile) {
+          const scrollTop = container.scrollTop
+          const sections = container.querySelectorAll("section")
+          
+          // Find which section is most visible
+          let mostVisibleSection = 0
+          let maxVisibility = 0
+
+          sections.forEach((section, index) => {
+            const rect = section.getBoundingClientRect()
+            const containerRect = container.getBoundingClientRect()
+            
+            // Calculate visible height
+            const visibleTop = Math.max(rect.top, containerRect.top)
+            const visibleBottom = Math.min(rect.bottom, containerRect.bottom)
+            const visibleHeight = Math.max(0, visibleBottom - visibleTop)
+            
+            // Calculate visibility percentage
+            const visibility = visibleHeight / rect.height
+            
+            if (visibility > maxVisibility) {
+              maxVisibility = visibility
+              mostVisibleSection = index
+            }
+          })
+
+          if (mostVisibleSection !== currentSection) {
+            setCurrentSection(mostVisibleSection)
+          }
+          
+          scrollThrottleRef.current = null
+          return
+        }
+
+        // Desktop horizontal scroll logic
         const sectionWidth = container.offsetWidth
         const scrollLeft = container.scrollLeft
         const sections = container.querySelectorAll("section")
@@ -301,7 +346,7 @@ export default function Home() {
         clearTimeout(scrollTimeout)
       }
     }
-  }, [currentSection])
+  }, [currentSection, isMobile])
 
   const renderBackground = (index: number) => (
     <div className="absolute inset-0 z-0">
@@ -322,13 +367,13 @@ export default function Home() {
 
   return (
     <main className="relative h-screen w-full overflow-hidden bg-background">
-      {/* Custom cursor - always visible */}
-      <CustomCursor />
+      {/* Custom cursor - hidden on mobile */}
+      {!isMobile && <CustomCursor />}
       
-      {/* Grain overlay for texture */}
+      {/* Grain overlay for texture - reduced intensity on mobile */}
       <GrainOverlay />
       
-      {/* Shader background with WebGL detection fallback */}
+      {/* Shader background with WebGL detection fallback - reduced quality on mobile */}
       {webglSupported === false ? (
         <ShaderFallback />
       ) : webglSupported === true ? (
@@ -337,10 +382,16 @@ export default function Home() {
 
       <div
         ref={scrollContainerRef}
-        className="flex h-full w-full overflow-x-scroll scroll-smooth"
+        className={`flex h-full w-full scroll-smooth ${
+          isMobile 
+            ? "flex-col overflow-y-auto overflow-x-hidden" 
+            : "overflow-x-scroll overflow-y-hidden"
+        }`}
         data-scroll-container
       >
-        <section className="relative z-10 flex h-full w-full flex-shrink-0 items-center justify-center px-8 overflow-hidden">
+        <section className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
+          isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
+        }`}>
           {renderBackground(0)}
           <div className="max-w-6xl text-center relative z-10">
             <div
@@ -354,7 +405,7 @@ export default function Home() {
               <span className="font-mono text-xs uppercase tracking-[0.4em] text-muted-foreground">Live Twice</span>
             </div>
             <h1
-              className="font-sans text-[clamp(2.5rem,8vw,7rem)] font-bold leading-[0.95] tracking-tight text-foreground mb-6"
+              className="font-sans text-[clamp(2rem,8vw,7rem)] font-bold leading-[0.95] tracking-tight text-foreground mb-6 px-4"
               style={{
                 opacity: currentSection === 0 ? 1 : 0,
                 transform: currentSection === 0 ? "translateY(0)" : "translateY(50px)",
@@ -402,7 +453,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative z-10 flex h-full w-full flex-shrink-0 items-center justify-center px-8 overflow-hidden">
+        <section className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
+          isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
+        }`}>
           {renderBackground(1)}
           <div
             className="max-w-6xl w-full relative z-10 grid gap-10 md:grid-cols-2"
@@ -413,7 +466,7 @@ export default function Home() {
             }}
           >
             <div>
-              <h2 className="font-sans text-5xl md:text-7xl font-bold mb-6 text-foreground">About</h2>
+              <h2 className="font-sans text-4xl md:text-5xl lg:text-7xl font-bold mb-6 text-foreground">About</h2>
               <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
                 Live Twice is a boutique social agency working exclusively with electronic music artists. We build
                 social-first campaigns that don’t just promote music — they create cultural moments.
@@ -430,7 +483,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative z-10 flex h-full w-full flex-shrink-0 items-center justify-center px-8 overflow-hidden">
+        <section className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
+          isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
+        }`}>
           {renderBackground(2)}
           <div
             className="max-w-6xl w-full relative z-10"
@@ -439,7 +494,7 @@ export default function Home() {
               transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           >
-            <h2 className="font-sans text-5xl md:text-7xl font-bold mb-12 text-foreground">What We Do</h2>
+            <h2 className="font-sans text-4xl md:text-5xl lg:text-7xl font-bold mb-12 text-foreground">What We Do</h2>
             <div className="grid md:grid-cols-2 gap-10">
               {[
                 "Viral campaign strategy",
@@ -472,7 +527,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative z-10 flex h-full w-full flex-shrink-0 items-center justify-center px-8 overflow-hidden">
+        <section className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
+          isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
+        }`}>
           {renderBackground(3)}
           <div
             className="max-w-6xl w-full relative z-10"
@@ -482,7 +539,7 @@ export default function Home() {
               transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           >
-            <h2 className="font-sans text-5xl md:text-7xl font-bold mb-6 text-foreground">Built for the release cycle.</h2>
+            <h2 className="font-sans text-4xl md:text-5xl lg:text-7xl font-bold mb-6 text-foreground">Built for the release cycle.</h2>
             <div className="grid md:grid-cols-3 gap-8 mt-10">
               {[
                 {
@@ -516,7 +573,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative z-10 flex h-full w-full flex-shrink-0 items-center justify-center px-8 overflow-hidden">
+        <section className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
+          isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
+        }`}>
           {renderBackground(4)}
           <div
             className="max-w-5xl w-full relative z-10 text-center"
@@ -526,7 +585,7 @@ export default function Home() {
               transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           >
-            <h2 className="font-sans text-5xl md:text-7xl font-bold mb-6 text-foreground">Artists we’ve worked with</h2>
+            <h2 className="font-sans text-4xl md:text-5xl lg:text-7xl font-bold mb-6 text-foreground">Artists we’ve worked with</h2>
             <div className="flex flex-wrap justify-center gap-6 text-2xl md:text-4xl font-semibold text-foreground/90">
               {["MK", "Michael Bibi", "Danny Howard"].map((artist) => (
                 <span key={artist} className="px-3 py-1 border border-foreground/10 bg-black/30">
@@ -538,7 +597,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative z-10 flex h-full w-full flex-shrink-0 items-center justify-center px-8 overflow-hidden">
+        <section className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
+          isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
+        }`}>
           {renderBackground(5)}
           <div
             className="max-w-6xl w-full relative z-10 grid gap-10 md:grid-cols-2"
@@ -549,7 +610,7 @@ export default function Home() {
             }}
           >
             <div>
-              <h2 className="font-sans text-5xl md:text-7xl font-bold mb-6 text-foreground">
+              <h2 className="font-sans text-4xl md:text-5xl lg:text-7xl font-bold mb-6 text-foreground">
                 Fan accounts that fuel virality
               </h2>
               <p className="text-muted-foreground leading-relaxed">
@@ -566,7 +627,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative z-10 flex h-full w-full flex-shrink-0 items-center justify-center px-8 overflow-hidden">
+        <section className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
+          isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
+        }`}>
           {renderBackground(6)}
           <div
             className="max-w-6xl w-full relative z-10 grid gap-10 md:grid-cols-2"
@@ -577,7 +640,7 @@ export default function Home() {
             }}
           >
             <div>
-              <h2 className="font-sans text-5xl md:text-7xl font-bold mb-6 text-foreground">
+              <h2 className="font-sans text-4xl md:text-5xl lg:text-7xl font-bold mb-6 text-foreground">
                 Paid, but never wasteful
               </h2>
               <p className="text-muted-foreground leading-relaxed">
@@ -593,7 +656,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative z-10 flex h-full w-full flex-shrink-0 items-center justify-center px-8 overflow-hidden">
+        <section className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
+          isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
+        }`}>
           {renderBackground(7)}
           <div
             className="max-w-6xl w-full relative z-10"
@@ -603,7 +668,7 @@ export default function Home() {
               transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           >
-            <h2 className="font-sans text-5xl md:text-7xl font-bold mb-8 text-foreground">How we work with artists</h2>
+            <h2 className="font-sans text-4xl md:text-5xl lg:text-7xl font-bold mb-8 text-foreground">How we work with artists</h2>
             <ul className="grid md:grid-cols-2 gap-6 text-muted-foreground text-lg">
               {[
                 "Bespoke monthly retainers",
@@ -620,7 +685,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative z-10 flex h-full w-full flex-shrink-0 items-center justify-center px-8 overflow-hidden">
+        <section className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
+          isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
+        }`}>
           {renderBackground(8)}
           <div
             className="max-w-4xl text-center relative z-10"
@@ -630,7 +697,7 @@ export default function Home() {
               transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           >
-            <h2 className="font-sans text-5xl md:text-7xl font-bold mb-6 text-foreground">
+            <h2 className="font-sans text-4xl md:text-5xl lg:text-7xl font-bold mb-6 text-foreground">
               Let’s build something that cuts through.
             </h2>
             <p className="text-xl md:text-2xl text-muted-foreground mb-10 leading-relaxed">
@@ -649,9 +716,10 @@ export default function Home() {
         </section>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20">
-        <div className="flex items-center space-x-3 rounded-full border border-foreground/10 bg-black/40 px-4 py-2 backdrop-blur">
-        {Array.from({ length: totalSections }).map((_, index) => {
+      {!isMobile && (
+        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="flex items-center space-x-3 rounded-full border border-foreground/10 bg-black/40 px-4 py-2 backdrop-blur">
+          {Array.from({ length: totalSections }).map((_, index) => {
             const isActive = index === currentSection
             return (
               <MagneticButton
@@ -674,11 +742,12 @@ export default function Home() {
               </MagneticButton>
             )
           })}
+          </div>
+          <div className="mt-3 text-center text-[10px] uppercase tracking-[0.3em] text-foreground/50">
+            {sectionLabels[currentSection]}
+          </div>
         </div>
-        <div className="mt-3 text-center text-[10px] uppercase tracking-[0.3em] text-foreground/50">
-          {sectionLabels[currentSection]}
-        </div>
-      </div>
+      )}
     </main>
   )
 }
