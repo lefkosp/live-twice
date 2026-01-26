@@ -432,7 +432,7 @@ export default function Home() {
                 transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.35s",
               }}
             >
-              Content, strategy, fan accounts and paid amplification — built around releases and live shows.
+              Content, strategy, fan accounts and paid amplification, all built around releases and live shows.
             </p>
             <div
               className="mt-10 text-sm uppercase tracking-[0.2em] text-foreground/70"
@@ -469,7 +469,7 @@ export default function Home() {
               <h2 className="font-sans text-4xl md:text-5xl lg:text-7xl font-bold mb-6 text-foreground">About</h2>
               <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
                 Live Twice is a boutique social agency working exclusively with electronic music artists. We build
-                social-first campaigns that don’t just promote music — they create cultural moments.
+                social-first campaigns that don’t just promote music. They create cultural moments.
               </p>
             </div>
             <div className="flex flex-col justify-center gap-6 text-muted-foreground text-base md:text-lg leading-relaxed">
@@ -644,7 +644,7 @@ export default function Home() {
                 Paid, but never wasteful
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                We create and manage ad creatives across TikTok, Meta and Shorts — optimised per platform and deployed
+                We create and manage ad creatives across TikTok, Meta and Shorts, optimised per platform and deployed
                 with intent.
               </p>
             </div>
