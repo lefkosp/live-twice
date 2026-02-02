@@ -25,18 +25,18 @@ export default function Home() {
   const artists = [
     {
       name: "MK",
-      logo: "/placeholder-logo.svg",
-      image: "/luxury-recording-studio-with-microphone-in-dramati.jpg",
+      logo: "/MK Split Logo 2015.webp",
+      image: "/mk.jpg",
     },
     {
       name: "Michael Bibi",
-      logo: "/placeholder-logo.svg",
-      image: "/professional-music-producer-at-mixing-console-with.jpg",
+      logo: "/Michael Bibi logo.png",
+      image: "/Bibi Pics 29.jpg",
     },
     {
       name: "Danny Howard",
-      logo: "/placeholder-logo.svg",
-      image: "/massive-concert-crowd-at-music-festival-with-red-s.jpg",
+      logo: "/Danny Howard Logo.png",
+      image: "/DH Silverworks 66.jpg",
     },
   ]
 
@@ -447,21 +447,31 @@ export default function Home() {
             isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
           }`}
         >
-          {/* Dynamic background based on hovered artist */}
+          {/* Preloaded background images - all stay in DOM, controlled via opacity */}
           <div className="absolute inset-0 z-0">
-            {hoveredArtist && (
-              <div className="relative w-full h-full">
+            {artists.map((artist) => (
+              <div
+                key={artist.name}
+                className="absolute inset-0"
+                style={{
+                  opacity: hoveredArtist === artist.name ? 1 : 0,
+                  transition: "opacity 0.5s ease-out",
+                  willChange: "opacity",
+                }}
+              >
                 <img
-                  src={artists.find((a) => a.name === hoveredArtist)?.image}
+                  src={artist.image}
                   alt=""
                   aria-hidden="true"
-                  className="w-full h-full object-cover grayscale opacity-30 transition-all duration-700"
+                  className="w-full h-full object-cover grayscale opacity-30"
                   style={{
-                    transform: hoveredArtist ? "scale(1.05)" : "scale(1.1)",
+                    transform: hoveredArtist === artist.name ? "scale(1.05)" : "scale(1.1)",
+                    transition: "transform 0.7s ease-out",
+                    willChange: "transform",
                   }}
                 />
               </div>
-            )}
+            ))}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/60 to-black" />
           </div>
 
@@ -485,20 +495,34 @@ export default function Home() {
                   onMouseLeave={() => !isMobile && setHoveredArtist(null)}
                 >
                   <div
-                    className="flex items-center justify-center gap-6 py-8 transition-all duration-500"
+                    className="flex items-center justify-center gap-6 py-8"
                     style={{
                       opacity: hoveredArtist && hoveredArtist !== artist.name ? 0.2 : 1,
                       transform: hoveredArtist === artist.name ? "scale(1.05)" : "scale(1)",
+                      transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
+                      willChange: "opacity, transform",
                     }}
                   >
-                    <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center border border-foreground/20 transition-all duration-500 group-hover:border-accent/50">
-                      <span className="text-foreground/40 text-xs">LOGO</span>
+                    <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={artist.logo}
+                        alt={`${artist.name} logo`}
+                        className={`w-full h-full object-contain transition-opacity duration-300 ${
+                          hoveredArtist === artist.name ? "opacity-100" : "opacity-80"
+                        } ${artist.name !== "Danny Howard" ? "filter brightness-0 invert" : ""}`}
+                      />
                     </div>
-                    <h3 className="font-sans text-3xl md:text-5xl lg:text-6xl font-light text-foreground transition-all duration-500 group-hover:text-accent">
+                    <h3 
+                      className="font-sans text-3xl md:text-5xl lg:text-6xl font-light transition-colors duration-300"
+                      style={{ color: hoveredArtist === artist.name ? "var(--accent)" : "var(--foreground)" }}
+                    >
                       {artist.name}
                     </h3>
                   </div>
-                  <div className="absolute inset-x-0 bottom-0 h-px bg-foreground/10 transition-all duration-500 group-hover:bg-accent/50"></div>
+                  <div 
+                    className="absolute inset-x-0 bottom-0 h-px transition-colors duration-300"
+                    style={{ backgroundColor: hoveredArtist === artist.name ? "rgba(255, 77, 77, 0.5)" : "rgba(255, 255, 255, 0.1)" }}
+                  ></div>
                 </div>
               ))}
             </div>
