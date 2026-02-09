@@ -348,30 +348,30 @@ export default function Home() {
       >
         {/* Section 1: Hero */}
         <section
-          className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
+          className={`relative z-10 flex w-full items-center justify-center overflow-hidden ${
             isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
           }`}
         >
           <div className="absolute inset-0 z-0">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/60 to-black" />
           </div>
-          <div className="max-w-4xl text-center relative z-10">
+          <div className="w-full text-center relative z-10">
             <div
               className="mb-8 overflow-hidden"
               style={{
                 opacity: currentSection === 0 ? 1 : 0,
                 transform: currentSection === 0 ? "translateY(0)" : "translateY(30px)",
-                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                transition: "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
-              <h1 className="font-sans text-[clamp(4rem,15vw,12rem)] font-bold leading-[0.9] tracking-tighter text-foreground">
-                LIVE
-                <br />
-                TWICE
-              </h1>
+              <img
+                src="/LiveTwice Logo White.svg"
+                alt="Live Twice"
+                className="w-[90vw] max-w-[1200px] h-auto mx-auto"
+              />
             </div>
             <p
-              className="font-sans text-lg md:text-xl text-muted-foreground max-w-xl mx-auto"
+              className="font-sans text-lg md:text-xl text-muted-foreground max-w-xl mx-auto px-4"
               style={{
                 opacity: currentSection === 0 ? 1 : 0,
                 transform: currentSection === 0 ? "translateY(0)" : "translateY(30px)",
