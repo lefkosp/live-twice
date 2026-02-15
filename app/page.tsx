@@ -281,23 +281,6 @@ export default function Home() {
             >
               Life happens once, what you create lets you live again.
             </p>
-            <div
-              className="mt-8 sm:mt-12"
-              style={{
-                opacity: heroRevealed ? 1 : 0,
-                transform: heroRevealed ? "translateY(0)" : "translateY(16px)",
-                transition:
-                  "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.45s, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.45s",
-              }}
-            >
-              <MagneticButton
-                onClick={() => scrollToSection(3)}
-                variant="primary"
-                size="lg"
-              >
-                Get in Touch
-              </MagneticButton>
-            </div>
           </div>
         </section>
 
@@ -342,23 +325,6 @@ export default function Home() {
               generating attention and ensuring longevity in social media. A
               presence built for what lasts.
             </p>
-            <div
-              className="mt-8 sm:mt-12"
-              style={{
-                opacity: currentSection === 1 ? 1 : 0,
-                transform:
-                  currentSection === 1 ? "translateY(0)" : "translateY(20px)",
-                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s",
-              }}
-            >
-              <MagneticButton
-                onClick={() => scrollToSection(3)}
-                variant="secondary"
-                size="lg"
-              >
-                Get in Touch
-              </MagneticButton>
-            </div>
           </div>
         </section>
 
@@ -387,7 +353,7 @@ export default function Home() {
           {/* Centre copy only: "Representing" */}
           <div className="relative z-10 flex items-center justify-center text-center px-5">
             <h2
-              className="font-sans text-[clamp(4rem,15vw,12rem)] font-bold leading-[0.9] tracking-tighter text-foreground"
+              className="font-sans text-[clamp(2.25rem,8vw,12rem)] sm:text-[clamp(4rem,15vw,12rem)] font-bold leading-[0.9] tracking-tighter text-foreground"
               style={{ textShadow: "0 0 80px rgba(0,0,0,0.8)" }}
             >
               REPRESENTING
