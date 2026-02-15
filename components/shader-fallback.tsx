@@ -51,7 +51,7 @@ export function ShaderFallback() {
   }, [])
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-0">
+    <div ref={containerRef} className="pointer-events-none fixed inset-0 z-[60]" style={{ mixBlendMode: "screen" }}>
       {/* Base layer - revealed at cursor position */}
       <div className="absolute inset-0 bg-slate-600" />
 

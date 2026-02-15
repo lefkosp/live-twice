@@ -1,319 +1,122 @@
-"use client"
+"use client";
 
-import { CustomCursor } from "@/components/custom-cursor"
-import { GrainOverlay } from "@/components/grain-overlay"
-import { MagneticButton } from "@/components/magnetic-button"
-import { ShaderBackground } from "@/components/shader-background"
-import { ShaderFallback } from "@/components/shader-fallback"
-import { useIsMobile } from "@/hooks/use-mobile"
-import { useRef, useEffect, useState } from "react"
+import { CustomCursor } from "@/components/custom-cursor";
+import { GrainOverlay } from "@/components/grain-overlay";
+import { MagneticButton } from "@/components/magnetic-button";
+import { ShaderBackground } from "@/components/shader-background";
+import { ShaderFallback } from "@/components/shader-fallback";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useRef, useEffect, useState } from "react";
 
 export default function Home() {
-  const isMobile = useIsMobile()
-  const totalSections = 4
-  const sectionLabels = ["Home", "About", "Artists", "Contact"]
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const [currentSection, setCurrentSection] = useState(0)
-  const [webglSupported, setWebglSupported] = useState<boolean | null>(null)
-  const [hoveredArtist, setHoveredArtist] = useState<string | null>(null)
-  const touchStartY = useRef(0)
-  const touchStartX = useRef(0)
-  const scrollThrottleRef = useRef<number | null>(null)
-  const isScrollingRef = useRef(false)
-  const lastScrollTimeRef = useRef(0)
+  const isMobile = useIsMobile();
+  const totalSections = 4;
+  const sectionLabels = ["Home", "About", "Representation", "Contact"];
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
+  const [currentSection, setCurrentSection] = useState(0);
+  const [webglSupported, setWebglSupported] = useState<boolean | null>(null);
+  const [heroRevealed, setHeroRevealed] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const representationSectionRef = useRef<HTMLElement | null>(null);
+  const representationVideoRef = useRef<HTMLVideoElement>(null);
+  const scrollThrottleRef = useRef<number | null>(null);
 
-  const artists = [
-    {
-      name: "MK",
-      logo: "/MK Split Logo 2015.webp",
-      image: "/mk.jpg",
-    },
-    {
-      name: "Michael Bibi",
-      logo: "/Michael Bibi logo.png",
-      image: "/Bibi Pics 29.jpg",
-    },
-    {
-      name: "Danny Howard",
-      logo: "/Danny Howard Logo.png",
-      image: "/DH Silverworks 66.jpg",
-    },
-  ]
+  // Hero opening animation: run once on mount
+  useEffect(() => {
+    const t = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setHeroRevealed(true));
+    });
+    return () => cancelAnimationFrame(t);
+  }, []);
+
+  // Representation: auto-start/pause video when section scrolls into view
+  useEffect(() => {
+    const section = representationSectionRef.current;
+    if (!section) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [e] = entries;
+        if (!e) return;
+        const video = representationVideoRef.current;
+        if (!video) return;
+        if (e.isIntersecting) video.play().catch(() => {});
+        else video.pause();
+      },
+      { threshold: 0.25, root: scrollContainerRef.current },
+    );
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
 
   // WebGL detection
   useEffect(() => {
     const checkWebGLSupport = () => {
       try {
-        const canvas = document.createElement("canvas")
+        const canvas = document.createElement("canvas");
         const gl =
           canvas.getContext("webgl") ||
           canvas.getContext("webgl2") ||
-          canvas.getContext("experimental-webgl")
-        setWebglSupported(!!gl)
+          canvas.getContext("experimental-webgl");
+        setWebglSupported(!!gl);
       } catch (e) {
-        setWebglSupported(false)
+        setWebglSupported(false);
       }
+    };
+    checkWebGLSupport();
+  }, []);
+
+  const scrollToSection = (index: number) => {
+    if (index < 0 || index >= totalSections) return;
+    const el = sectionRefs.current[index];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
     }
-    checkWebGLSupport()
-  }, [])
+  };
 
-  const scrollToSection = (index: number, allowJump: boolean = false) => {
-    if (index < 0 || index >= totalSections) {
-      return
-    }
-    if (scrollContainerRef.current && !isScrollingRef.current) {
-      const sectionDiff = Math.abs(index - currentSection)
-      if (!allowJump && sectionDiff > 1) {
-        return
-      }
-
-      const sectionWidth = scrollContainerRef.current.offsetWidth
-      isScrollingRef.current = true
-      lastScrollTimeRef.current = Date.now()
-
-      scrollContainerRef.current.scrollTo({
-        left: sectionWidth * index,
-        behavior: "smooth",
-      })
-      setCurrentSection(index)
-
-      setTimeout(() => {
-        isScrollingRef.current = false
-      }, 600)
-    }
-  }
-
+  // Update current section based on scroll position (for nav highlight)
   useEffect(() => {
-    if (isMobile) return
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY
-      touchStartX.current = e.touches[0].clientX
-    }
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (Math.abs(e.touches[0].clientY - touchStartY.current) > 10) {
-        e.preventDefault()
-      }
-    }
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (isScrollingRef.current) {
-        return
-      }
-
-      const touchEndY = e.changedTouches[0].clientY
-      const touchEndX = e.changedTouches[0].clientX
-      const deltaY = touchStartY.current - touchEndY
-      const deltaX = touchStartX.current - touchEndX
-
-      if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 50) {
-        if (deltaY > 0 && currentSection < totalSections - 1) {
-          scrollToSection(currentSection + 1)
-        } else if (deltaY < 0 && currentSection > 0) {
-          scrollToSection(currentSection - 1)
-        }
-      }
-    }
-
-    const container = scrollContainerRef.current
-    if (container) {
-      container.addEventListener("touchstart", handleTouchStart, { passive: true })
-      container.addEventListener("touchmove", handleTouchMove, { passive: false })
-      container.addEventListener("touchend", handleTouchEnd, { passive: true })
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener("touchstart", handleTouchStart)
-        container.removeEventListener("touchmove", handleTouchMove)
-        container.removeEventListener("touchend", handleTouchEnd)
-      }
-    }
-  }, [currentSection, isMobile])
-
-  useEffect(() => {
-    if (isMobile) return
-
-    const handleWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        e.preventDefault()
-
-        if (!scrollContainerRef.current) return
-
-        const now = Date.now()
-        if (isScrollingRef.current || now - lastScrollTimeRef.current < 500) {
-          return
-        }
-
-        const container = scrollContainerRef.current
-        const sectionWidth = container.offsetWidth
-        const currentScrollLeft = container.scrollLeft
-        const currentSectionIndex = Math.round(currentScrollLeft / sectionWidth)
-
-        const scrollDirection = e.deltaY > 0 ? 1 : -1
-        const targetSection = Math.max(
-          0,
-          Math.min(totalSections - 1, currentSectionIndex + scrollDirection)
-        )
-
-        if (targetSection === currentSectionIndex) {
-          return
-        }
-
-        isScrollingRef.current = true
-        lastScrollTimeRef.current = now
-
-        container.scrollTo({
-          left: targetSection * sectionWidth,
-          behavior: "smooth",
-        })
-
-        if (targetSection !== currentSection) {
-          setCurrentSection(targetSection)
-        }
-
-        setTimeout(() => {
-          isScrollingRef.current = false
-        }, 600)
-      }
-    }
-
-    const container = scrollContainerRef.current
-    if (container) {
-      container.addEventListener("wheel", handleWheel, { passive: false })
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener("wheel", handleWheel)
-      }
-    }
-  }, [currentSection, isMobile])
-
-  useEffect(() => {
-    let scrollTimeout: NodeJS.Timeout | null = null
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
     const handleScroll = () => {
-      if (scrollThrottleRef.current !== null) return
-
+      if (scrollThrottleRef.current !== null) return;
       scrollThrottleRef.current = requestAnimationFrame(() => {
-        if (!scrollContainerRef.current) {
-          scrollThrottleRef.current = null
-          return
+        const sections = sectionRefs.current.filter(Boolean) as HTMLElement[];
+        if (sections.length === 0) {
+          scrollThrottleRef.current = null;
+          return;
         }
-
-        const container = scrollContainerRef.current
-
-        if (isMobile) {
-          const sections = container.querySelectorAll("section")
-          let mostVisibleSection = 0
-          let maxVisibility = 0
-
-          sections.forEach((section, index) => {
-            const rect = section.getBoundingClientRect()
-            const containerRect = container.getBoundingClientRect()
-
-            const visibleTop = Math.max(rect.top, containerRect.top)
-            const visibleBottom = Math.min(rect.bottom, containerRect.bottom)
-            const visibleHeight = Math.max(0, visibleBottom - visibleTop)
-
-            const visibility = visibleHeight / rect.height
-
-            if (visibility > maxVisibility) {
-              maxVisibility = visibility
-              mostVisibleSection = index
-            }
-          })
-
-          if (mostVisibleSection !== currentSection) {
-            setCurrentSection(mostVisibleSection)
+        const containerRect = container.getBoundingClientRect();
+        const centerY = containerRect.top + containerRect.height / 2;
+        let mostVisibleSection = 0;
+        let minDistance = Infinity;
+        sections.forEach((section, index) => {
+          const rect = section.getBoundingClientRect();
+          const sectionCenterY = rect.top + rect.height / 2;
+          const distance = Math.abs(sectionCenterY - centerY);
+          if (distance < minDistance) {
+            minDistance = distance;
+            mostVisibleSection = index;
           }
+        });
+        setCurrentSection(mostVisibleSection);
+        scrollThrottleRef.current = null;
+      });
+    };
 
-          scrollThrottleRef.current = null
-          return
-        }
-
-        const sectionWidth = container.offsetWidth
-        const scrollLeft = container.scrollLeft
-
-        const newSection = Math.round(scrollLeft / sectionWidth)
-
-        if (newSection !== currentSection && newSection >= 0 && newSection <= totalSections - 1) {
-          setCurrentSection(newSection)
-        }
-
-        if (scrollTimeout) {
-          clearTimeout(scrollTimeout)
-        }
-
-        scrollTimeout = setTimeout(() => {
-          const sections = container.querySelectorAll("section")
-          let mostVisibleSection = 0
-          let maxVisibility = 0
-
-          sections.forEach((section, index) => {
-            const rect = section.getBoundingClientRect()
-            const containerRect = container.getBoundingClientRect()
-
-            const visibleLeft = Math.max(rect.left, containerRect.left)
-            const visibleRight = Math.min(rect.right, containerRect.right)
-            const visibleWidth = Math.max(0, visibleRight - visibleLeft)
-
-            const visibility = visibleWidth / sectionWidth
-
-            if (visibility > maxVisibility) {
-              maxVisibility = visibility
-              mostVisibleSection = index
-            }
-          })
-
-          const sectionDiff = Math.abs(mostVisibleSection - currentSection)
-          if (maxVisibility > 0.3 && sectionDiff <= 1) {
-            const targetScrollLeft = mostVisibleSection * sectionWidth
-            const currentScrollLeft = container.scrollLeft
-            const distance = Math.abs(targetScrollLeft - currentScrollLeft)
-
-            if (distance > sectionWidth * 0.05) {
-              isScrollingRef.current = true
-              lastScrollTimeRef.current = Date.now()
-
-              container.scrollTo({
-                left: targetScrollLeft,
-                behavior: "smooth",
-              })
-
-              setTimeout(() => {
-                isScrollingRef.current = false
-              }, 600)
-            }
-          }
-        }, 150)
-
-        scrollThrottleRef.current = null
-      })
-    }
-
-    const container = scrollContainerRef.current
-    if (container) {
-      container.addEventListener("scroll", handleScroll, { passive: true })
-    }
-
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => {
-      if (container) {
-        container.removeEventListener("scroll", handleScroll)
-      }
-      if (scrollThrottleRef.current) {
-        cancelAnimationFrame(scrollThrottleRef.current)
-      }
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout)
-      }
-    }
-  }, [currentSection, isMobile])
+      container.removeEventListener("scroll", handleScroll);
+      if (scrollThrottleRef.current)
+        cancelAnimationFrame(scrollThrottleRef.current);
+    };
+  }, []);
 
   return (
-    <main className="relative h-screen w-full overflow-hidden bg-background">
+    <main className="relative min-h-screen w-full bg-background">
       {!isMobile && <CustomCursor />}
       <GrainOverlay />
       {webglSupported === false ? (
@@ -322,305 +125,307 @@ export default function Home() {
         <ShaderBackground />
       ) : null}
 
-      {/* Header with LT Logo */}
-      <header className="fixed top-0 left-0 right-0 z-50 p-6 md:p-8">
-        <div className="flex items-center justify-between">
-          <div className="group cursor-pointer" onClick={() => scrollToSection(0, true)}>
-            <div className="relative">
-              <span className="font-sans text-2xl md:text-3xl font-bold text-foreground tracking-tighter transition-all duration-300 group-hover:text-accent">
-                LT
-              </span>
-              <div className="absolute -inset-2 bg-accent/0 group-hover:bg-accent/10 transition-all duration-300 -z-10 rounded"></div>
-            </div>
+      {/* Header — desktop: inline nav / mobile: burger menu */}
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-foreground/10 bg-black/60 backdrop-blur-md">
+        <div className="flex items-center justify-between px-5 py-3 md:px-8 md:py-5">
+          {/* Logo */}
+          <div
+            className="group cursor-pointer"
+            onClick={() => {
+              scrollToSection(0);
+              setMenuOpen(false);
+            }}
+          >
+            <span className="font-sans text-2xl md:text-3xl font-bold text-foreground tracking-tighter transition-all duration-300 group-hover:text-accent">
+              LT
+            </span>
           </div>
-          <MagneticButton onClick={() => scrollToSection(3, true)} variant="secondary" size="default">
-            Get in Touch
-          </MagneticButton>
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-10" aria-label="Main">
+            {sectionLabels.map((label, index) => (
+              <button
+                key={index}
+                onClick={() => scrollToSection(index)}
+                className={`font-sans text-sm uppercase tracking-[0.15em] transition-colors duration-200 hover:text-accent ${
+                  currentSection === index
+                    ? "text-accent"
+                    : "text-foreground/80"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Desktop CTA */}
+          <div className="hidden md:block">
+            <MagneticButton
+              onClick={() => scrollToSection(3)}
+              variant="secondary"
+              size="default"
+            >
+              Get in Touch
+            </MagneticButton>
+          </div>
+
+          {/* Mobile burger button */}
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="md:hidden relative z-[60] flex flex-col items-center justify-center w-10 h-10 gap-[5px]"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+          >
+            <span
+              className="block h-[2px] w-6 bg-foreground transition-all duration-300 origin-center"
+              style={{
+                transform: menuOpen
+                  ? "translateY(3.5px) rotate(45deg)"
+                  : "none",
+              }}
+            />
+            <span
+              className="block h-[2px] w-6 bg-foreground transition-all duration-300 origin-center"
+              style={{
+                transform: menuOpen
+                  ? "translateY(-3.5px) rotate(-45deg)"
+                  : "none",
+              }}
+            />
+          </button>
         </div>
       </header>
 
+      {/* Mobile full-screen nav overlay */}
+      <div
+        className={`fixed inset-0 z-[55] flex flex-col items-center justify-center bg-black/95 backdrop-blur-lg transition-all duration-300 md:hidden ${
+          menuOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <nav className="flex flex-col items-center gap-8" aria-label="Mobile">
+          {sectionLabels.map((label, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                scrollToSection(index);
+                setMenuOpen(false);
+              }}
+              className={`font-sans text-2xl uppercase tracking-[0.2em] transition-colors duration-200 ${
+                currentSection === index ? "text-accent" : "text-foreground/80"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+        <div className="mt-12">
+          <a
+            href="mailto:business@livetwice.co.uk?subject=Enquiry"
+            className="font-sans text-sm uppercase tracking-[0.2em] text-foreground/60 underline underline-offset-4"
+          >
+            business@livetwice.co.uk
+          </a>
+        </div>
+      </div>
+
       <div
         ref={scrollContainerRef}
-        className={`flex h-full w-full scroll-smooth ${
-          isMobile ? "flex-col overflow-y-auto overflow-x-hidden" : "overflow-x-scroll overflow-y-hidden"
-        }`}
+        className="flex flex-col w-full overflow-y-auto overflow-x-hidden scroll-smooth h-screen"
         data-scroll-container
       >
         {/* Section 1: Hero */}
         <section
-          className={`relative z-10 flex w-full items-center justify-center overflow-hidden ${
-            isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
-          }`}
+          ref={(el) => {
+            sectionRefs.current[0] = el;
+          }}
+          className="relative z-10 flex w-full min-h-[100svh] flex-shrink-0 items-center justify-center overflow-hidden px-5 py-20"
         >
           <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/60 to-black" />
+            <video
+              className="absolute inset-0 h-full w-full object-cover object-center"
+              autoPlay
+              muted
+              loop
+              playsInline
+              aria-hidden
+              src="/WEBSITE.mp4"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/60 to-black/90" />
           </div>
           <div className="w-full text-center relative z-10">
+            {/* Placeholder logo (font) — new logo in progress */}
             <div
               className="mb-8 overflow-hidden"
               style={{
                 opacity: currentSection === 0 ? 1 : 0,
-                transform: currentSection === 0 ? "translateY(0)" : "translateY(30px)",
-                transition: "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
-            >
-              <img
-                src="/LiveTwice Logo White.svg"
-                alt="Live Twice"
-                className="w-[90vw] max-w-[1200px] h-auto mx-auto"
-              />
-            </div>
-            <p
-              className="font-sans text-lg md:text-xl text-muted-foreground max-w-xl mx-auto px-4"
-              style={{
-                opacity: currentSection === 0 ? 1 : 0,
-                transform: currentSection === 0 ? "translateY(0)" : "translateY(30px)",
-                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s",
-              }}
-            >
-              Bespoke social growth for electronic music artists.
-            </p>
-            <div
-              className="mt-12"
-              style={{
-                opacity: currentSection === 0 ? 1 : 0,
-                transform: currentSection === 0 ? "translateY(0)" : "translateY(20px)",
-                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s",
-              }}
-            >
-              <MagneticButton onClick={() => scrollToSection(3, true)} variant="primary" size="lg">
-                Get in Touch
-              </MagneticButton>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 2: About */}
-        <section
-          className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
-            isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
-          }`}
-        >
-          <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/60 to-black" />
-          </div>
-          <div className="max-w-3xl text-center relative z-10">
-            <h2
-              className="font-sans text-4xl md:text-6xl lg:text-7xl font-light mb-8 text-foreground tracking-tight"
-              style={{
-                opacity: currentSection === 1 ? 1 : 0,
-                transform: currentSection === 1 ? "translateY(0)" : "translateY(30px)",
+                transform:
+                  currentSection === 0 ? "translateY(0)" : "translateY(30px)",
                 transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
-              About
-            </h2>
+              <h1 className="font-sans text-[clamp(4rem,15vw,12rem)] font-bold leading-[0.9] tracking-tighter text-foreground">
+                LIVE
+                <br />
+                TWICE
+              </h1>
+            </div>
             <p
-              className="text-muted-foreground text-lg md:text-2xl leading-relaxed max-w-2xl mx-auto"
+              className="font-sans text-base sm:text-lg md:text-xl text-muted-foreground max-w-md sm:max-w-xl mx-auto"
               style={{
-                opacity: currentSection === 1 ? 1 : 0,
-                transform: currentSection === 1 ? "translateY(0)" : "translateY(30px)",
-                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s",
+                opacity: heroRevealed ? 1 : 0,
+                transform: heroRevealed ? "translateY(0)" : "translateY(20px)",
+                transition:
+                  "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.25s, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.25s",
               }}
             >
-              We work with a select group of artists. Our methods are proven, but we keep them close. If you
-              know, you know.
+              Life happens once, what you create lets you live again.
             </p>
             <div
-              className="mt-12"
+              className="mt-8 sm:mt-12"
               style={{
-                opacity: currentSection === 1 ? 1 : 0,
-                transform: currentSection === 1 ? "translateY(0)" : "translateY(20px)",
-                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s",
+                opacity: heroRevealed ? 1 : 0,
+                transform: heroRevealed ? "translateY(0)" : "translateY(16px)",
+                transition:
+                  "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.45s, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.45s",
               }}
             >
-              <MagneticButton onClick={() => scrollToSection(3, true)} variant="secondary" size="lg">
-                Get in Touch
-              </MagneticButton>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 3: Artists */}
-        <section
-          className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
-            isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
-          }`}
-        >
-          {/* Preloaded background images - all stay in DOM, controlled via opacity */}
-          <div className="absolute inset-0 z-0">
-            {artists.map((artist) => (
-              <div
-                key={artist.name}
-                className="absolute inset-0"
-                style={{
-                  opacity: hoveredArtist === artist.name ? 1 : 0,
-                  transition: "opacity 0.5s ease-out",
-                  willChange: "opacity",
-                }}
-              >
-                <img
-                  src={artist.image}
-                  alt=""
-                  aria-hidden="true"
-                  className="w-full h-full object-cover grayscale opacity-30"
-                  style={{
-                    transform: hoveredArtist === artist.name ? "scale(1.05)" : "scale(1.1)",
-                    transition: "transform 0.7s ease-out",
-                    willChange: "transform",
-                  }}
-                />
-              </div>
-            ))}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/60 to-black" />
-          </div>
-
-          <div
-            className="max-w-5xl w-full relative z-10 text-center"
-            style={{
-              opacity: currentSection === 2 ? 1 : 0.3,
-              transform: currentSection === 2 ? "scale(1)" : "scale(0.95)",
-              transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
-            }}
-          >
-            <h2 className="font-sans text-4xl md:text-6xl lg:text-7xl font-light mb-16 text-foreground tracking-tight">
-              Artists
-            </h2>
-            <div className="space-y-8">
-              {artists.map((artist) => (
-                <div
-                  key={artist.name}
-                  className="group relative cursor-pointer"
-                  onMouseEnter={() => !isMobile && setHoveredArtist(artist.name)}
-                  onMouseLeave={() => !isMobile && setHoveredArtist(null)}
-                >
-                  <div
-                    className="flex items-center justify-center gap-6 py-8"
-                    style={{
-                      opacity: hoveredArtist && hoveredArtist !== artist.name ? 0.2 : 1,
-                      transform: hoveredArtist === artist.name ? "scale(1.05)" : "scale(1)",
-                      transition: "opacity 0.3s ease-out, transform 0.3s ease-out",
-                      willChange: "opacity, transform",
-                    }}
-                  >
-                    <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center overflow-hidden">
-                      <img
-                        src={artist.logo}
-                        alt={`${artist.name} logo`}
-                        className={`w-full h-full object-contain transition-opacity duration-300 ${
-                          hoveredArtist === artist.name ? "opacity-100" : "opacity-80"
-                        } ${artist.name !== "Danny Howard" ? "filter brightness-0 invert" : ""}`}
-                      />
-                    </div>
-                    <h3 
-                      className="font-sans text-3xl md:text-5xl lg:text-6xl font-light transition-colors duration-300"
-                      style={{ color: hoveredArtist === artist.name ? "var(--accent)" : "var(--foreground)" }}
-                    >
-                      {artist.name}
-                    </h3>
-                  </div>
-                  <div 
-                    className="absolute inset-x-0 bottom-0 h-px transition-colors duration-300"
-                    style={{ backgroundColor: hoveredArtist === artist.name ? "rgba(255, 77, 77, 0.5)" : "rgba(255, 255, 255, 0.1)" }}
-                  ></div>
-                </div>
-              ))}
-            </div>
-            <div
-              className="mt-16"
-              style={{
-                opacity: hoveredArtist ? 0.3 : 1,
-                transition: "all 0.5s ease",
-              }}
-            >
-              <MagneticButton onClick={() => scrollToSection(3, true)} variant="secondary" size="lg">
-                Get in Touch
-              </MagneticButton>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 4: Contact */}
-        <section
-          className={`relative z-10 flex w-full items-center justify-center px-4 sm:px-8 overflow-hidden ${
-            isMobile ? "min-h-screen py-16" : "h-full flex-shrink-0"
-          }`}
-        >
-          <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/60 to-black" />
-          </div>
-          <div
-            className="max-w-4xl text-center relative z-10"
-            style={{
-              opacity: currentSection === 3 ? 1 : 0.3,
-              transform: currentSection === 3 ? "scale(1)" : "scale(0.95)",
-              transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
-            }}
-          >
-            <h2 className="font-sans text-4xl md:text-5xl lg:text-7xl font-light mb-8 text-foreground tracking-tight">
-              Let's talk.
-            </h2>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-10 leading-relaxed">
-              We work with a limited number of artists.
-              <br />
-              If you're serious about growth, get in touch.
-            </p>
-            <div className="flex flex-col items-center gap-6">
               <MagneticButton
-                onClick={() => {
-                  window.location.href = "mailto:business@livetwice.co.uk?subject=Inquiry"
-                }}
+                onClick={() => scrollToSection(3)}
                 variant="primary"
                 size="lg"
               >
                 Get in Touch
               </MagneticButton>
-              <div className="text-sm uppercase tracking-[0.2em] text-foreground/70">
-                <a
-                  href="mailto:business@livetwice.co.uk"
-                  className="inline-flex items-center border-b border-accent/70 text-foreground hover:text-accent transition-colors duration-300"
-                >
-                  business@livetwice.co.uk
-                </a>
-              </div>
             </div>
           </div>
         </section>
-      </div>
 
-      {!isMobile && (
-        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20">
-          <div className="flex items-center space-x-3 rounded-full border border-foreground/10 bg-black/40 px-4 py-2 backdrop-blur">
-            {Array.from({ length: totalSections }).map((_, index) => {
-              const isActive = index === currentSection
-              return (
-                <MagneticButton
-                  key={index}
-                  onClick={() => scrollToSection(index, true)}
-                  className="group relative px-2 py-2"
-                  variant="ghost"
-                  size="default"
-                  aria-label={`Navigate to ${sectionLabels[index]} section`}
-                >
-                  <span
-                    className={`block h-2.5 w-2.5 rounded-full border transition-all duration-300 ${
-                      isActive
-                        ? "border-accent/80 bg-accent/80 shadow-[0_0_12px_rgba(255,77,77,0.6)]"
-                        : "border-foreground/30 bg-foreground/10 group-hover:border-foreground/60 group-hover:bg-foreground/20"
-                    }`}
-                  />
-                  {isActive && (
-                    <span className="pointer-events-none absolute -inset-1 rounded-full border border-accent/40 opacity-70 animate-pulse" />
-                  )}
-                </MagneticButton>
-              )
-            })}
+        {/* Section 2: About — Ushuaïa crowd shot */}
+        <section
+          ref={(el) => {
+            sectionRefs.current[1] = el;
+          }}
+          className="relative z-10 flex w-full min-h-[100svh] flex-shrink-0 items-center justify-center overflow-hidden px-5 py-20 sm:px-8"
+        >
+          <div className="absolute inset-0 z-0">
+            <img
+              src="/%27ABOUT%27%20PICS/20250620_Ushuaia_Calvin_Harris_0006_5000x4000px_.jpg"
+              alt=""
+              aria-hidden
+              className="absolute inset-0 h-full w-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-black/85" />
           </div>
-          <div className="mt-3 text-center text-[10px] uppercase tracking-[0.3em] text-foreground/50">
-            {sectionLabels[currentSection]}
+          <div className="max-w-3xl text-center relative z-10">
+            <h2
+              className="font-sans text-[clamp(4rem,15vw,12rem)] font-bold leading-[0.9] tracking-tighter text-foreground"
+              style={{
+                opacity: currentSection === 1 ? 1 : 0,
+                transform:
+                  currentSection === 1 ? "translateY(0)" : "translateY(30px)",
+                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+            >
+              ABOUT
+            </h2>
+            <p
+              className="text-muted-foreground text-base sm:text-lg md:text-2xl leading-relaxed max-w-2xl mx-auto"
+              style={{
+                opacity: currentSection === 1 ? 1 : 0,
+                transform:
+                  currentSection === 1 ? "translateY(0)" : "translateY(30px)",
+                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s",
+              }}
+            >
+              Live Twice is a creative group focused on capturing moments,
+              generating attention and ensuring longevity in social media. A
+              presence built for what lasts.
+            </p>
+            <div
+              className="mt-8 sm:mt-12"
+              style={{
+                opacity: currentSection === 1 ? 1 : 0,
+                transform:
+                  currentSection === 1 ? "translateY(0)" : "translateY(20px)",
+                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s",
+              }}
+            >
+              <MagneticButton
+                onClick={() => scrollToSection(3)}
+                variant="secondary"
+                size="lg"
+              >
+                Get in Touch
+              </MagneticButton>
+            </div>
           </div>
-        </div>
-      )}
+        </section>
+
+        {/* Section 3: Representation — B&W slideshow video, editorial. No logos, no names. */}
+        <section
+          ref={(el) => {
+            sectionRefs.current[2] = el;
+            representationSectionRef.current = el;
+          }}
+          className="relative z-10 flex w-full min-h-[100svh] flex-shrink-0 items-center justify-center overflow-hidden"
+        >
+          <div className="absolute inset-0 z-0">
+            <video
+              ref={representationVideoRef}
+              className="absolute inset-0 h-full w-full object-cover object-center"
+              src="/REPRESENTING/Website%20slide%20show%2016x9%20BW.mp4"
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-hidden
+            />
+            <div className="absolute inset-0 bg-black/30" />
+          </div>
+
+          {/* Centre copy only: "Representing" */}
+          <div className="relative z-10 flex items-center justify-center text-center px-5">
+            <h2
+              className="font-sans text-[clamp(4rem,15vw,12rem)] font-bold leading-[0.9] tracking-tighter text-foreground"
+              style={{ textShadow: "0 0 80px rgba(0,0,0,0.8)" }}
+            >
+              REPRESENTING
+            </h2>
+          </div>
+        </section>
+
+        {/* Section 4: Contact — minimal: heading + email only. No forms, phone, socials. */}
+        <section
+          ref={(el) => {
+            sectionRefs.current[3] = el;
+          }}
+          className="relative z-10 flex w-full min-h-[100svh] flex-shrink-0 items-center justify-center overflow-hidden px-5 py-20 sm:px-8"
+        >
+          <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/60 to-black" />
+          </div>
+          <div
+            className="max-w-2xl text-center relative z-10"
+            style={{
+              opacity: currentSection === 3 ? 1 : 0,
+              transform:
+                currentSection === 3 ? "translateY(0)" : "translateY(20px)",
+              transition: "opacity 0.6s ease-out, transform 0.6s ease-out",
+            }}
+          >
+            <h2 className="font-sans text-[clamp(4rem,15vw,12rem)] font-bold leading-[0.9] tracking-tighter text-foreground mb-8 sm:mb-10 md:mb-12">
+              LET'S TALK
+            </h2>
+            <a
+              href="mailto:business@livetwice.co.uk?subject=Enquiry"
+              className="font-sans text-base sm:text-lg md:text-xl text-foreground/90 underline underline-offset-4 decoration-foreground/40 hover:decoration-foreground/80 transition-colors duration-200 py-3 inline-block"
+            >
+              business@livetwice.co.uk
+            </a>
+          </div>
+        </section>
+      </div>
     </main>
-  )
+  );
 }

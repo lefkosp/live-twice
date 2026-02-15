@@ -70,7 +70,7 @@ export function CustomCursor() {
       {/* Outer ring - 16px hollow circle */}
       <div
         ref={outerRef}
-        className="pointer-events-none fixed left-0 top-0 z-50 mix-blend-difference will-change-transform"
+        className="pointer-events-none fixed left-0 top-0 z-[9999] mix-blend-difference will-change-transform"
         style={{ contain: "layout style paint" }}
       >
         <div className="h-4 w-4 rounded-full border-2 border-white" />
@@ -79,7 +79,7 @@ export function CustomCursor() {
       {/* Inner dot - 8px solid circle */}
       <div
         ref={innerRef}
-        className="pointer-events-none fixed left-0 top-0 z-50 mix-blend-difference will-change-transform"
+        className="pointer-events-none fixed left-0 top-0 z-[9999] mix-blend-difference will-change-transform"
         style={{ contain: "layout style paint" }}
       >
         <div className="h-2 w-2 rounded-full bg-white" />

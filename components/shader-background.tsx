@@ -16,7 +16,7 @@ export function ShaderBackground() {
   const speed = isMobile ? 0.3 : 0.4
   
   return (
-    <div className="fixed inset-0 z-0">
+    <div className="pointer-events-none fixed inset-0 z-[60]" style={{ mixBlendMode: "screen" }}>
       <Shader className="h-full w-full">
         {/* Layer 1: Animated noise base */}
         <Swirl

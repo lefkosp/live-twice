@@ -119,37 +119,58 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    cursor: none; /* Hide default cursor everywhere */
   }
+
+  /* Custom cursor only on non-touch devices */
+  @media (pointer: fine) {
+    * {
+      cursor: none;
+    }
+  }
+
   body {
     @apply bg-background text-foreground;
     background-color: #0a0a0a;
     color: #fafafa;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
   }
 
   [data-scroll-container] {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    perspective: 1000px;
-    scroll-snap-type: x mandatory;
-    scroll-padding: 0;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    overscroll-behavior-y: contain;
   }
 
-  [data-scroll-container]::-webkit-scrollbar {
-    width: 0;
-    height: 0;
+  /* Desktop: thin scrollbar */
+  @media (pointer: fine) {
+    [data-scroll-container]::-webkit-scrollbar {
+      width: 6px;
+    }
+    [data-scroll-container]::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    [data-scroll-container]::-webkit-scrollbar-thumb {
+      background: oklch(0.3 0 0);
+      border-radius: 3px;
+    }
+  }
+
+  /* Mobile: hide scrollbar */
+  @media (pointer: coarse) {
+    [data-scroll-container]::-webkit-scrollbar {
+      display: none;
+    }
+    [data-scroll-container] {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
   }
 
   section {
     transform: translateZ(0);
-    will-change: transform;
-    contain: layout style paint;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
   }
 
   button {
