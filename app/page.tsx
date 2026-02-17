@@ -18,36 +18,82 @@ export default function Home() {
   const [webglSupported, setWebglSupported] = useState<boolean | null>(null);
   const [heroRevealed, setHeroRevealed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const representationSectionRef = useRef<HTMLElement | null>(null);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [introActive, setIntroActive] = useState(true);
+  const [introFlash, setIntroFlash] = useState(false);
+  const [introFading, setIntroFading] = useState(false);
+  const [touchFeedback, setTouchFeedback] = useState({
+    x: 0,
+    y: 0,
+    visible: false,
+    burst: 0,
+  });
+  const contactHeadingDefault = "LET'S TALK";
+  const contactHeadingAlt = "LIVE TWICE";
+  const [contactHeadingText, setContactHeadingText] = useState(
+    contactHeadingDefault,
+  );
+  const [contactHeadingTick, setContactHeadingTick] = useState(0);
   const representationVideoRef = useRef<HTMLVideoElement>(null);
   const scrollThrottleRef = useRef<number | null>(null);
+  const introTimersRef = useRef<number[]>([]);
+  const touchRafRef = useRef<number | null>(null);
+  const touchFadeRef = useRef<number | null>(null);
+  const touchPointRef = useRef({ x: 0, y: 0 });
+  const contactTimersRef = useRef<number[]>([]);
+  const contactAnimatingRef = useRef(false);
+  const contactTextRef = useRef("LET'S TALK");
 
-  // Hero opening animation: run once on mount
+  // Detect reduced motion preference.
   useEffect(() => {
-    const t = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setHeroRevealed(true));
-    });
-    return () => cancelAnimationFrame(t);
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setPrefersReducedMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
   }, []);
 
-  // Representation: auto-start/pause video when section scrolls into view
+  // Opening animation: brief negative-style flash, then reveal hero.
   useEffect(() => {
-    const section = representationSectionRef.current;
-    if (!section) return;
+    introTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    introTimersRef.current = [];
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [e] = entries;
-        if (!e) return;
-        const video = representationVideoRef.current;
-        if (!video) return;
-        if (e.isIntersecting) video.play().catch(() => {});
-        else video.pause();
-      },
-      { threshold: 0.25, root: scrollContainerRef.current },
+    if (prefersReducedMotion) {
+      setIntroActive(false);
+      setIntroFlash(false);
+      setIntroFading(false);
+      setHeroRevealed(true);
+      return;
+    }
+
+    setIntroActive(true);
+    setIntroFlash(false);
+    setIntroFading(false);
+    setHeroRevealed(false);
+
+    introTimersRef.current.push(
+      window.setTimeout(() => setIntroFlash(true), 120),
     );
-    observer.observe(section);
-    return () => observer.disconnect();
+    introTimersRef.current.push(
+      window.setTimeout(() => setHeroRevealed(true), 420),
+    );
+    introTimersRef.current.push(
+      window.setTimeout(() => setIntroFading(true), 840),
+    );
+    introTimersRef.current.push(
+      window.setTimeout(() => setIntroActive(false), 1260),
+    );
+
+    return () => {
+      introTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+      introTimersRef.current = [];
+    };
+  }, [prefersReducedMotion]);
+
+  // Representation: start video once so it loops continuously
+  useEffect(() => {
+    const video = representationVideoRef.current;
+    if (video) video.play().catch(() => {});
   }, []);
 
   // WebGL detection
@@ -115,9 +161,145 @@ export default function Home() {
     };
   }, []);
 
+  // iPhone/mobile alternative to cursor: touch glow feedback.
+  useEffect(() => {
+    if (!isMobile) {
+      setTouchFeedback((prev) => ({ ...prev, visible: false }));
+      return;
+    }
+
+    const hideTouchFeedback = () => {
+      if (touchFadeRef.current) window.clearTimeout(touchFadeRef.current);
+      touchFadeRef.current = window.setTimeout(() => {
+        setTouchFeedback((prev) => ({ ...prev, visible: false }));
+      }, 220);
+    };
+
+    const showTouchFeedback = (x: number, y: number, burst: boolean) => {
+      setTouchFeedback((prev) => ({
+        x,
+        y,
+        visible: true,
+        burst: burst ? prev.burst + 1 : prev.burst,
+      }));
+      hideTouchFeedback();
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      showTouchFeedback(touch.clientX, touch.clientY, true);
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      touchPointRef.current = { x: touch.clientX, y: touch.clientY };
+      if (touchRafRef.current !== null) return;
+      touchRafRef.current = requestAnimationFrame(() => {
+        touchRafRef.current = null;
+        showTouchFeedback(
+          touchPointRef.current.x,
+          touchPointRef.current.y,
+          false,
+        );
+      });
+    };
+
+    const onTouchEnd = () => {
+      hideTouchFeedback();
+    };
+
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
+      if (touchRafRef.current) cancelAnimationFrame(touchRafRef.current);
+      if (touchFadeRef.current) window.clearTimeout(touchFadeRef.current);
+      touchRafRef.current = null;
+      touchFadeRef.current = null;
+    };
+  }, [isMobile]);
+
+  const clearContactTimers = () => {
+    contactTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    contactTimersRef.current = [];
+  };
+
+  const updateContactHeading = (text: string) => {
+    if (contactTextRef.current === text) return;
+    contactTextRef.current = text;
+    setContactHeadingText(text);
+    setContactHeadingTick((tick) => tick + 1);
+  };
+
+  const handleContactHeadingEnter = () => {
+    if (contactAnimatingRef.current) return;
+    contactAnimatingRef.current = true;
+    clearContactTimers();
+    updateContactHeading(contactHeadingAlt);
+    contactTimersRef.current.push(
+      window.setTimeout(() => {
+        updateContactHeading(contactHeadingDefault);
+        contactAnimatingRef.current = false;
+      }, 520),
+    );
+  };
+
+  const handleContactHeadingLeave = () => {
+    clearContactTimers();
+    contactAnimatingRef.current = false;
+    updateContactHeading(contactHeadingDefault);
+  };
+
+  useEffect(() => {
+    return () => {
+      clearContactTimers();
+    };
+  }, []);
+
   return (
     <main className="relative min-h-screen w-full bg-background">
       {!isMobile && <CustomCursor />}
+      {isMobile && (
+        <div
+          className={`mobile-touch-feedback ${
+            touchFeedback.visible ? "mobile-touch-feedback-visible" : ""
+          }`}
+          style={{
+            left: touchFeedback.x,
+            top: touchFeedback.y,
+          }}
+          aria-hidden
+        >
+          <span
+            key={touchFeedback.burst}
+            className="mobile-touch-feedback-ring"
+          />
+          <span className="mobile-touch-feedback-core" />
+        </div>
+      )}
+      {introActive && (
+        <div
+          className={`intro-overlay ${introFlash ? "intro-overlay-flash" : ""} ${
+            introFading ? "intro-overlay-fade" : ""
+          }`}
+          aria-hidden
+        >
+          <div className="intro-word-wrap">
+            <h2 className="intro-word">LIVE TWICE</h2>
+            <div
+              className={`intro-highlight ${introFlash ? "intro-highlight-active" : ""}`}
+            />
+          </div>
+        </div>
+      )}
       <GrainOverlay />
       {webglSupported === false ? (
         <ShaderFallback />
@@ -130,13 +312,13 @@ export default function Home() {
         <div className="flex items-center justify-between px-5 py-3 md:px-8 md:py-5">
           {/* Logo */}
           <div
-            className="group cursor-pointer"
+            className="cursor-pointer"
             onClick={() => {
               scrollToSection(0);
               setMenuOpen(false);
             }}
           >
-            <span className="font-sans text-2xl md:text-3xl font-bold text-foreground tracking-tighter transition-all duration-300 group-hover:text-accent">
+            <span className="font-sans text-2xl md:text-3xl font-bold text-foreground tracking-tighter">
               LT
             </span>
           </div>
@@ -260,8 +442,12 @@ export default function Home() {
               style={{
                 opacity: currentSection === 0 ? 1 : 0,
                 transform:
-                  currentSection === 0 ? "translateY(0)" : "translateY(30px)",
-                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                  currentSection === 0
+                    ? "translateY(0) scale(1)"
+                    : `translateY(${isMobile ? 56 : 30}px) scale(${isMobile ? 0.93 : 0.98})`,
+                transition: isMobile
+                  ? "all 0.95s cubic-bezier(0.22, 1, 0.36, 1)"
+                  : "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
               <h1 className="font-sans text-[clamp(4rem,15vw,12rem)] font-bold leading-[0.9] tracking-tighter text-foreground">
@@ -274,9 +460,12 @@ export default function Home() {
               className="font-sans text-base sm:text-lg md:text-xl text-muted-foreground max-w-md sm:max-w-xl mx-auto"
               style={{
                 opacity: heroRevealed ? 1 : 0,
-                transform: heroRevealed ? "translateY(0)" : "translateY(20px)",
-                transition:
-                  "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.25s, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.25s",
+                transform: heroRevealed
+                  ? "translateY(0) scale(1)"
+                  : `translateY(${isMobile ? 38 : 20}px) scale(${isMobile ? 0.96 : 1})`,
+                transition: isMobile
+                  ? "opacity 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.2s, transform 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.2s"
+                  : "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.25s, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.25s",
               }}
             >
               Life happens once, what you create lets you live again.
@@ -306,8 +495,12 @@ export default function Home() {
               style={{
                 opacity: currentSection === 1 ? 1 : 0,
                 transform:
-                  currentSection === 1 ? "translateY(0)" : "translateY(30px)",
-                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+                  currentSection === 1
+                    ? "translateY(0) scale(1)"
+                    : `translateY(${isMobile ? 52 : 30}px) scale(${isMobile ? 0.94 : 0.98})`,
+                transition: isMobile
+                  ? "all 0.95s cubic-bezier(0.22, 1, 0.36, 1)"
+                  : "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
               ABOUT
@@ -317,8 +510,12 @@ export default function Home() {
               style={{
                 opacity: currentSection === 1 ? 1 : 0,
                 transform:
-                  currentSection === 1 ? "translateY(0)" : "translateY(30px)",
-                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s",
+                  currentSection === 1
+                    ? "translateY(0)"
+                    : `translateY(${isMobile ? 34 : 30}px)`,
+                transition: isMobile
+                  ? "all 1s cubic-bezier(0.22, 1, 0.36, 1) 0.16s"
+                  : "all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s",
               }}
             >
               Live Twice is a creative group focused on capturing moments,
@@ -332,7 +529,6 @@ export default function Home() {
         <section
           ref={(el) => {
             sectionRefs.current[2] = el;
-            representationSectionRef.current = el;
           }}
           className="relative z-10 flex w-full min-h-[100svh] flex-shrink-0 items-center justify-center overflow-hidden"
         >
@@ -341,10 +537,11 @@ export default function Home() {
               ref={representationVideoRef}
               className="absolute inset-0 h-full w-full object-cover object-center"
               src="/REPRESENTING/Website%20slide%20show%2016x9%20BW.mp4"
+              autoPlay
               muted
               loop
               playsInline
-              preload="metadata"
+              preload="auto"
               aria-hidden
             />
             <div className="absolute inset-0 bg-black/30" />
@@ -376,12 +573,29 @@ export default function Home() {
             style={{
               opacity: currentSection === 3 ? 1 : 0,
               transform:
-                currentSection === 3 ? "translateY(0)" : "translateY(20px)",
-              transition: "opacity 0.6s ease-out, transform 0.6s ease-out",
+                currentSection === 3
+                  ? "translateY(0) scale(1)"
+                  : `translateY(${isMobile ? 34 : 20}px) scale(${isMobile ? 0.96 : 1})`,
+              transition: isMobile
+                ? "opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1), transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)"
+                : "opacity 0.6s ease-out, transform 0.6s ease-out",
             }}
           >
-            <h2 className="font-sans text-[clamp(4rem,15vw,12rem)] font-bold leading-[0.9] tracking-tighter text-foreground mb-8 sm:mb-10 md:mb-12">
-              LET'S TALK
+            <h2
+              className="font-sans text-[clamp(4rem,15vw,12rem)] font-bold leading-[0.9] tracking-tighter text-foreground mb-8 sm:mb-10 md:mb-12"
+              onMouseEnter={handleContactHeadingEnter}
+              onMouseLeave={handleContactHeadingLeave}
+            >
+              <span
+                key={`${contactHeadingText}-${contactHeadingTick}`}
+                className={`contact-heading-swap ${
+                  contactHeadingText === contactHeadingAlt
+                    ? "contact-heading-live-twice"
+                    : "contact-heading-lets-talk"
+                }`}
+              >
+                {contactHeadingText}
+              </span>
             </h2>
             <a
               href="mailto:business@livetwice.co.uk?subject=Enquiry"

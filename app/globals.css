@@ -192,4 +192,201 @@
     mix-blend-mode: screen;
     opacity: 0.4;
   }
+
+  .intro-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    opacity: 1;
+    transition: opacity 420ms ease;
+    pointer-events: none;
+  }
+
+  .intro-overlay-flash {
+    background: #020202;
+  }
+
+  .intro-overlay-fade {
+    opacity: 0;
+  }
+
+  .intro-word-wrap {
+    position: relative;
+    overflow: hidden;
+    padding-inline: 1rem;
+  }
+
+  .intro-word {
+    margin: 0;
+    font-size: clamp(2.4rem, 14vw, 10rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    color: #fafafa;
+    mix-blend-mode: normal;
+    transition: color 280ms ease;
+  }
+
+  .intro-overlay-flash .intro-word {
+    color: #0a0a0a;
+  }
+
+  .intro-highlight {
+    position: absolute;
+    inset: 0;
+    transform: translateX(-110%);
+    background: #f5f5f5;
+    opacity: 0;
+    mix-blend-mode: screen;
+  }
+
+  .intro-highlight-active {
+    animation: introSweep 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .mobile-touch-feedback {
+    position: fixed;
+    z-index: 110;
+    width: 0;
+    height: 0;
+    transform: translate(-50%, -50%) scale(0.65);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 220ms ease,
+      transform 220ms ease;
+    will-change: transform, opacity;
+  }
+
+  .mobile-touch-feedback-visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .mobile-touch-feedback-core {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 9999px;
+    transform: translate(-50%, -50%);
+    background: color-mix(in oklab, var(--accent) 68%, white);
+    box-shadow: 0 0 24px color-mix(in oklab, var(--accent) 60%, white);
+  }
+
+  .mobile-touch-feedback-ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 54px;
+    height: 54px;
+    border-radius: 9999px;
+    transform: translate(-50%, -50%);
+    border: 2px solid color-mix(in oklab, var(--accent) 70%, white);
+    animation: touchBurst 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .contact-heading-swap {
+    display: inline-block;
+    position: relative;
+    isolation: isolate;
+    will-change: transform, opacity;
+  }
+
+  .contact-heading-lets-talk {
+    animation: headingSwap 280ms ease both;
+  }
+
+  .contact-heading-live-twice {
+    letter-spacing: -0.03em;
+    text-shadow: 0 0 26px rgba(255, 255, 255, 0.2);
+    animation: contactHeroReveal 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .contact-heading-live-twice::after {
+    content: "";
+    position: absolute;
+    inset: -0.08em -0.16em;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.85) 45%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    mix-blend-mode: screen;
+    transform: translateX(-125%);
+    opacity: 0;
+    pointer-events: none;
+    animation: contactHeroSweep 560ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  @keyframes introSweep {
+    0% {
+      transform: translateX(-110%);
+      opacity: 0;
+    }
+    15% {
+      opacity: 0.85;
+    }
+    100% {
+      transform: translateX(110%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes touchBurst {
+    0% {
+      opacity: 0.9;
+      transform: translate(-50%, -50%) scale(0.45);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.25);
+    }
+  }
+
+  @keyframes headingSwap {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes contactHeroSweep {
+    0% {
+      transform: translateX(-125%);
+      opacity: 0;
+    }
+    20% {
+      opacity: 0.8;
+    }
+    100% {
+      transform: translateX(125%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes contactHeroReveal {
+    0% {
+      opacity: 0;
+      transform: translateY(8px) scale(0.97);
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(-1px) scale(1.015);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
 }
