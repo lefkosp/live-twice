@@ -312,15 +312,17 @@ export default function Home() {
         <div className="flex items-center justify-between px-5 py-3 md:px-8 md:py-5">
           {/* Logo */}
           <div
-            className="cursor-pointer"
+            className="cursor-pointer flex items-center"
             onClick={() => {
               scrollToSection(0);
               setMenuOpen(false);
             }}
           >
-            <span className="font-sans text-2xl md:text-3xl font-bold text-foreground tracking-tighter">
-              LT
-            </span>
+            <img
+              src="/LT%20LOGO%20SHORT%20WHITE.svg"
+              alt="Live Twice"
+              className="h-5 md:h-7 w-auto"
+            />
           </div>
 
           {/* Desktop nav */}
@@ -425,20 +427,24 @@ export default function Home() {
         >
           <div className="absolute inset-0 z-0">
             <video
-              className="absolute inset-0 h-full w-full object-cover object-center"
+              className="absolute inset-0 h-full w-full object-cover object-center will-change-transform"
+              style={{ transform: "translateZ(0)", contain: "strict" }}
               autoPlay
               muted
               loop
               playsInline
+              preload="auto"
               aria-hidden
               src="/WEBSITE.mp4"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/60 to-black/90" />
+            <div
+              className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/60 to-black/90"
+              style={{ transform: "translateZ(0)" }}
+            />
           </div>
           <div className="w-full text-center relative z-10">
-            {/* Placeholder logo (font) — new logo in progress */}
             <div
-              className="mb-8 overflow-hidden"
+              className="mb-8 overflow-hidden flex justify-center"
               style={{
                 opacity: currentSection === 0 ? 1 : 0,
                 transform:
@@ -450,11 +456,11 @@ export default function Home() {
                   : "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
-              <h1 className="font-sans text-[clamp(4rem,15vw,12rem)] font-bold leading-[0.9] tracking-tighter text-foreground">
-                LIVE
-                <br />
-                TWICE
-              </h1>
+              <img
+                src="/LT%20LOGO%20WHITE.svg"
+                alt="Live Twice"
+                className="w-[min(95vw,60rem)] h-auto max-h-[clamp(10rem,32vw,24rem)] object-contain"
+              />
             </div>
             <p
               className="font-sans text-base sm:text-lg md:text-xl text-muted-foreground max-w-md sm:max-w-xl mx-auto"
@@ -481,11 +487,19 @@ export default function Home() {
           className="relative z-10 flex w-full min-h-[100svh] flex-shrink-0 items-center justify-center overflow-hidden px-5 py-20 sm:px-8"
         >
           <div className="absolute inset-0 z-0">
+            {/* Mobile: original Ushuaia photo */}
             <img
               src="/%27ABOUT%27%20PICS/20250620_Ushuaia_Calvin_Harris_0006_5000x4000px_.jpg"
               alt=""
               aria-hidden
-              className="absolute inset-0 h-full w-full object-cover object-center"
+              className="absolute inset-0 h-full w-full object-cover object-center md:hidden"
+            />
+            {/* Desktop: ushuaia 1 */}
+            <img
+              src="/%27ABOUT%27%20PICS/ushuaia%201.png"
+              alt=""
+              aria-hidden
+              className="absolute inset-0 h-full w-full object-cover object-center hidden md:block"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-black/85" />
           </div>
@@ -536,7 +550,7 @@ export default function Home() {
             <video
               ref={representationVideoRef}
               className="absolute inset-0 h-full w-full object-cover object-center"
-              src="/REPRESENTING/Website%20slide%20show%2016x9%20BW.mp4"
+              src="/REPRESENTING/REPRESENTING.mp4"
               autoPlay
               muted
               loop

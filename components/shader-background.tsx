@@ -11,11 +11,11 @@ export function ShaderBackground() {
   const coarse = isMobile ? 30 : 40;
   const medium = isMobile ? 30 : 40;
   const fine = isMobile ? 30 : 40;
-  const intensity = isMobile ? 1.4 : 1.0;
-  const radius = isMobile ? 3.2 : 2.2;
+  const intensity = isMobile ? 1.0 : 1.0;
+  const radius = isMobile ? 2.6 : 2.2;
   const speed = isMobile ? 0.3 : 0.4;
-  const chromaOpacity = isMobile ? 1.0 : 1.0;
-  const overlayOpacity = isMobile ? 0.05 : 0.15;
+  const chromaOpacity = isMobile ? 0.85 : 1.0;
+  const overlayOpacity = isMobile ? 0.1 : 0.15;
 
   return (
     <div
