@@ -489,14 +489,14 @@ export default function Home() {
           <div className="absolute inset-0 z-0">
             {/* Mobile: original Ushuaia photo */}
             <img
-              src="/%27ABOUT%27%20PICS/20250620_Ushuaia_Calvin_Harris_0006_5000x4000px_.jpg"
+              src="/%27ABOUT%27%20PICS/20250620_Ushuaia_Calvin_Harris_0006.jpg"
               alt=""
               aria-hidden
               className="absolute inset-0 h-full w-full object-cover object-center md:hidden"
             />
             {/* Desktop: ushuaia 1 */}
             <img
-              src="/%27ABOUT%27%20PICS/ushuaia%201.png"
+              src="/%27ABOUT%27%20PICS/ushuaia%201.jpg"
               alt=""
               aria-hidden
               className="absolute inset-0 h-full w-full object-cover object-center hidden md:block"
@@ -549,7 +549,8 @@ export default function Home() {
           <div className="absolute inset-0 z-0">
             <video
               ref={representationVideoRef}
-              className="absolute inset-0 h-full w-full object-cover object-center"
+              className="absolute inset-0 h-full w-full object-cover object-center will-change-transform"
+              style={{ transform: "translateZ(0)", contain: "strict" }}
               src="/REPRESENTING/REPRESENTING.mp4"
               autoPlay
               muted
