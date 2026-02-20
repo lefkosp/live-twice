@@ -34,7 +34,12 @@ export default function Home() {
     contactHeadingDefault,
   );
   const [contactHeadingTick, setContactHeadingTick] = useState(0);
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
+  const representationSectionRef = useRef<HTMLElement | null>(null);
   const representationVideoRef = useRef<HTMLVideoElement>(null);
+  const [representationVideoSrc, setRepresentationVideoSrc] = useState<
+    string | null
+  >(null);
   const scrollThrottleRef = useRef<number | null>(null);
   const introTimersRef = useRef<number[]>([]);
   const touchRafRef = useRef<number | null>(null);
@@ -90,11 +95,48 @@ export default function Home() {
     };
   }, [prefersReducedMotion]);
 
-  // Representation: start video once so it loops continuously
+  // Hero: force play on mount and on canplay (Chrome mobile often ignores autoplay attribute)
   useEffect(() => {
-    const video = representationVideoRef.current;
-    if (video) video.play().catch(() => {});
+    const video = heroVideoRef.current;
+    if (!video) return;
+    const play = () => video.play().catch(() => {});
+    play();
+    video.addEventListener("canplay", play);
+    return () => video.removeEventListener("canplay", play);
   }, []);
+
+  // Representation: lazy-load src when section is slightly in view, play/pause by visibility
+  useEffect(() => {
+    const section = representationSectionRef.current;
+    const container = scrollContainerRef.current;
+    if (!section || !container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [e] = entries;
+        if (!e) return;
+        const video = representationVideoRef.current;
+        if (e.isIntersecting) {
+          setRepresentationVideoSrc((prev) =>
+            prev === null ? "/REPRESENTING/REPRESENTING.mp4" : prev,
+          );
+          video?.play().catch(() => {});
+        } else {
+          video?.pause();
+        }
+      },
+      { root: container, threshold: 0.05, rootMargin: "0px" },
+    );
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+
+  // Start representation video when src is set (after lazy load)
+  useEffect(() => {
+    if (!representationVideoSrc) return;
+    const video = representationVideoRef.current;
+    video?.play().catch(() => {});
+  }, [representationVideoSrc]);
 
   // WebGL detection
   useEffect(() => {
@@ -308,7 +350,7 @@ export default function Home() {
       ) : null}
 
       {/* Header — desktop: inline nav / mobile: burger menu */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-foreground/10 bg-black/60 backdrop-blur-md">
+      <header className="fixed top-0 left-0 right-0 z-[60] border-b border-foreground/10 bg-black/60 backdrop-blur-md">
         <div className="flex items-center justify-between px-5 py-3 md:px-8 md:py-5">
           {/* Logo */}
           <div
@@ -427,6 +469,7 @@ export default function Home() {
         >
           <div className="absolute inset-0 z-0">
             <video
+              ref={heroVideoRef}
               className="absolute inset-0 h-full w-full object-cover object-center will-change-transform"
               style={{ transform: "translateZ(0)", contain: "strict" }}
               autoPlay
@@ -543,6 +586,7 @@ export default function Home() {
         <section
           ref={(el) => {
             sectionRefs.current[2] = el;
+            representationSectionRef.current = el;
           }}
           className="relative z-10 flex w-full min-h-[100svh] flex-shrink-0 items-center justify-center overflow-hidden"
         >
@@ -551,13 +595,13 @@ export default function Home() {
               ref={representationVideoRef}
               className="absolute inset-0 h-full w-full object-cover object-center will-change-transform"
               style={{ transform: "translateZ(0)", contain: "strict" }}
-              src="/REPRESENTING/REPRESENTING.mp4"
-              autoPlay
+              src={representationVideoSrc ?? undefined}
               muted
               loop
               playsInline
-              preload="auto"
+              preload="metadata"
               aria-hidden
+              onCanPlay={() => representationVideoRef.current?.play().catch(() => {})}
             />
             <div className="absolute inset-0 bg-black/30" />
           </div>
