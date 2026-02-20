@@ -517,7 +517,9 @@ export default function Home() {
                   : "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.25s, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.25s",
               }}
             >
-              Life happens once, what you create lets you live again.
+              life happens once
+              {isMobile && <br />}
+              what you create let's you live again.
             </p>
           </div>
         </section>
@@ -563,7 +565,7 @@ export default function Home() {
               ABOUT
             </h2>
             <p
-              className="text-muted-foreground text-base sm:text-lg md:text-2xl leading-relaxed max-w-2xl mx-auto"
+              className="text-base sm:text-lg md:text-2xl leading-relaxed max-w-2xl mx-auto text-foreground drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
               style={{
                 opacity: currentSection === 1 ? 1 : 0,
                 transform:
