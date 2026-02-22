@@ -506,8 +506,9 @@ export default function Home() {
               />
             </div>
             <p
-              className="font-sans text-base sm:text-lg md:text-xl text-muted-foreground max-w-md sm:max-w-xl mx-auto"
+              className="font-sans uppercase text-base sm:text-lg md:text-xl text-muted-foreground max-w-md sm:max-w-xl mx-auto md:whitespace-nowrap"
               style={{
+                color: "#ffffffcc",
                 opacity: heroRevealed ? 1 : 0,
                 transform: heroRevealed
                   ? "translateY(0) scale(1)"
@@ -519,7 +520,10 @@ export default function Home() {
             >
               life happens once
               {isMobile && <br />}
-              what you create let's you live again.
+              <span className="font-sans uppercase">
+                {" "}
+                what you create let's you live again.
+              </span>
             </p>
           </div>
         </section>
@@ -603,7 +607,9 @@ export default function Home() {
               playsInline
               preload="metadata"
               aria-hidden
-              onCanPlay={() => representationVideoRef.current?.play().catch(() => {})}
+              onCanPlay={() =>
+                representationVideoRef.current?.play().catch(() => {})
+              }
             />
             <div className="absolute inset-0 bg-black/30" />
           </div>
