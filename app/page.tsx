@@ -518,7 +518,7 @@ export default function Home() {
                   : "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.25s, transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.25s",
               }}
             >
-              life happens once
+              life happens once,
               {isMobile && <br />}
               <span className="font-sans uppercase">
                 {" "}
@@ -545,7 +545,7 @@ export default function Home() {
             />
             {/* Desktop: ushuaia 1 */}
             <img
-              src="/%27ABOUT%27%20PICS/ushuaia%201.jpg"
+              src="/%27ABOUT%27%20PICS/about-desktop.jpg"
               alt=""
               aria-hidden
               className="absolute inset-0 h-full w-full object-cover object-center hidden md:block"
@@ -672,6 +672,18 @@ export default function Home() {
             </a>
           </div>
         </section>
+
+        {/* Footer credit */}
+        <footer className="relative z-10 flex flex-shrink-0 items-center justify-center py-8 px-5 min-h-[4rem] border-t border-foreground/10 bg-black/40">
+          <a
+            href="https://cobuilt.co.uk/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-sans text-[11px] sm:text-xs uppercase tracking-[0.25em] text-foreground/45 hover:text-accent transition-colors duration-300"
+          >
+            Designed by CoBuilt
+          </a>
+        </footer>
       </div>
     </main>
   );
