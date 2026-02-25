@@ -672,18 +672,6 @@ export default function Home() {
             </a>
           </div>
         </section>
-
-        {/* Footer credit */}
-        <footer className="relative z-10 flex flex-shrink-0 items-center justify-center py-8 px-5 min-h-[4rem] border-t border-foreground/10 bg-black/40">
-          <a
-            href="https://cobuilt.co.uk/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-sans text-[11px] sm:text-xs uppercase tracking-[0.25em] text-foreground/45 hover:text-accent transition-colors duration-300"
-          >
-            Designed by CoBuilt
-          </a>
-        </footer>
       </div>
     </main>
   );
